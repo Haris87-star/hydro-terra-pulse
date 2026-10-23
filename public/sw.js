@@ -1,5 +1,5 @@
 // Kaveri Terra-Pulse Service Worker (DPDP Act 2023 Compliant)
-const CACHE_NAME = 'kaveri-terra-pulse-v2.4';
+const CACHE_NAME = 'kaveri-terra-pulse-v2.5';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

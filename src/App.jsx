@@ -6,6 +6,8 @@ import { MobileBottomNav } from './components/Common/MobileBottomNav';
 import { INITIAL_STREETS } from './data/streetsData';
 import { audioManager } from './utils/AudioContextManager';
 import { triggerHaptic } from './utils/haptics';
+import { useGeolocation } from './hooks/useGeolocation';
+import { AutonomousSentinelBanner } from './components/Common/AutonomousSentinelBanner';
 import { 
   Radio, 
   MapPin, 
@@ -50,6 +52,9 @@ export default function App() {
   const [isSyntheticDemo, setIsSyntheticDemo] = useState(true);
   const [isDpdpModalOpen, setIsDpdpModalOpen] = useState(false);
   const [showLiveProbeDock, setShowLiveProbeDock] = useState(false);
+
+  // Live High-Accuracy Smartphone & Browser Geolocation
+  const userLocation = useGeolocation();
 
   // Startup Animation State: Fast initial launch & remembers session
   const [showBootSequence, setShowBootSequence] = useState(() => {
@@ -178,6 +183,33 @@ export default function App() {
     }));
   };
 
+  // Autonomous Valve Isolation: Instantly isolate rupture node without manual hunting
+  const handleAutoIsolateValves = () => {
+    triggerHaptic('success');
+    setStreets((prev) =>
+      prev.map((s) => {
+        if (s.id !== activeLeakStreetId) return s;
+        return {
+          ...s,
+          valveAOpen: false,
+          valveBOpen: false,
+          pressure: 0,
+          isDepressurized: true
+        };
+      })
+    );
+    setValveStates((prev) => ({
+      ...prev,
+      [`${activeLeakStreetId}-valveA`]: true,
+      [`${activeLeakStreetId}-valveB`]: true
+    }));
+  };
+
+  const isRuptureIsolated = useMemo(() => {
+    const leakSt = streets.find((s) => s.id === activeLeakStreetId);
+    return leakSt ? (!leakSt.valveAOpen && !leakSt.valveBOpen) : false;
+  }, [streets, activeLeakStreetId]);
+
   // DPDP Purge Handler
   const handlePurgeMemory = () => {
     triggerHaptic('heavy');
@@ -210,6 +242,20 @@ export default function App() {
         onOpenDpdpModal={() => setIsDpdpModalOpen(true)}
         onOpenDownloadModal={() => setIsDownloadModalOpen(true)}
         onReplayBootSequence={() => setShowBootSequence(true)}
+        userLocation={userLocation}
+      />
+
+      {/* Autonomous AI Leak Sentinel: Continuously monitors and detects leaks automatically */}
+      <AutonomousSentinelBanner
+        streets={streets}
+        activeLeakStreetId={activeLeakStreetId}
+        currentStreet={currentStreet}
+        onAutoIsolate={handleAutoIsolateValves}
+        onNavigateToMap={() => {
+          setActiveTab('twin');
+          setTwinSubView('gis');
+        }}
+        isAutoIsolated={isRuptureIsolated}
       />
 
       {/* Floating or Docked Live Hardware Probe */}
@@ -432,6 +478,9 @@ export default function App() {
                     activeLeakStreetId={activeLeakStreetId}
                     onSelectStreet={(st) => handleSelectLeakStreet(st.id)}
                     onNavigateToAcoustic={() => setActiveTab('acoustic')}
+                    onToggleValve={handleToggleValve}
+                    userLocation={userLocation}
+                    onDetectLocation={userLocation.detectLocation}
                   />
                 </div>
               </Suspense>

@@ -171,14 +171,26 @@ export const PipelineTwin = ({
                     <span className={street.pressure < 25 ? 'text-red-400 font-bold' : 'text-slate-400'}>
                       {street.pressure} PSI
                     </span>
-                    <div className="flex items-center space-x-1.5">
-                      <span 
-                        title={`Valve A: ${street.valveAOpen ? 'Open' : 'Closed'}`}
-                        className={`w-2.5 h-2.5 rounded-full transition-all ${street.valveAOpen ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' : 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]'} ring-2 ring-slate-900`} 
+                    <div className="flex items-center space-x-2">
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerHaptic('medium');
+                          if (onToggleValve) onToggleValve(street.id, 'valveA');
+                        }}
+                        title={`Valve A: ${street.valveAOpen ? 'Open (Tap to Shut)' : 'Closed (Tap to Open)'}`}
+                        className={`w-3.5 h-3.5 rounded-full transition-all cursor-pointer ${street.valveAOpen ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)]'} ring-2 ring-slate-900 active:scale-75`} 
                       />
-                      <span 
-                        title={`Valve B: ${street.valveBOpen ? 'Open' : 'Closed'}`}
-                        className={`w-2.5 h-2.5 rounded-full transition-all ${street.valveBOpen ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' : 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]'} ring-2 ring-slate-900`} 
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerHaptic('medium');
+                          if (onToggleValve) onToggleValve(street.id, 'valveB');
+                        }}
+                        title={`Valve B: ${street.valveBOpen ? 'Open (Tap to Shut)' : 'Closed (Tap to Open)'}`}
+                        className={`w-3.5 h-3.5 rounded-full transition-all cursor-pointer ${street.valveBOpen ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)]'} ring-2 ring-slate-900 active:scale-75`} 
                       />
                     </div>
                   </div>
@@ -200,7 +212,7 @@ export const PipelineTwin = ({
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" /> Rupture Detected (&lt;18 PSI)
               </span>
             </div>
-            <span>24 Spindles Monitored</span>
+            <span>24 Spindles Monitored (Tap dots or cards to toggle)</span>
           </div>
         </div>
       </div>
@@ -260,13 +272,11 @@ export const PipelineTwin = ({
                 </span>
               </div>
 
-              {/* Valve A Card */}
-              <div 
-                role="button"
-                tabIndex={0}
+              {/* Valve A Button Card */}
+              <button 
+                type="button"
                 onClick={() => handleValveClick('valveA')}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleValveClick('valveA'); }}
-                className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 flex items-center justify-between group active:scale-[0.98] ${
+                className={`w-full p-3 rounded-xl border cursor-pointer transition-all duration-200 flex items-center justify-between group active:scale-[0.98] text-left ${
                   selectedStreet.valveAOpen 
                     ? 'bg-slate-900/90 border-slate-700/80 hover:border-emerald-500/70 shadow-sm' 
                     : 'bg-red-950/40 border-red-500/70 shadow-md shadow-red-950/30'
@@ -298,15 +308,13 @@ export const PipelineTwin = ({
                   </span>
                   <div className="text-[9px] font-mono text-slate-500 mt-0.5">Tap to {selectedStreet.valveAOpen ? 'Shut' : 'Open'}</div>
                 </div>
-              </div>
+              </button>
 
-              {/* Valve B Card */}
-              <div 
-                role="button"
-                tabIndex={0}
+              {/* Valve B Button Card */}
+              <button 
+                type="button"
                 onClick={() => handleValveClick('valveB')}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleValveClick('valveB'); }}
-                className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 flex items-center justify-between group active:scale-[0.98] ${
+                className={`w-full p-3 rounded-xl border cursor-pointer transition-all duration-200 flex items-center justify-between group active:scale-[0.98] text-left ${
                   selectedStreet.valveBOpen 
                     ? 'bg-slate-900/90 border-slate-700/80 hover:border-emerald-500/70 shadow-sm' 
                     : 'bg-red-950/40 border-red-500/70 shadow-md shadow-red-950/30'
@@ -338,7 +346,7 @@ export const PipelineTwin = ({
                   </span>
                   <div className="text-[9px] font-mono text-slate-500 mt-0.5">Tap to {selectedStreet.valveBOpen ? 'Shut' : 'Open'}</div>
                 </div>
-              </div>
+              </button>
             </div>
 
             {/* Quick Action Button to Module 2 Acoustic Correlator */}

@@ -24,7 +24,8 @@ export const Header = ({
   onPurgeMemory,
   onOpenDpdpModal,
   onOpenDownloadModal,
-  onReplayBootSequence
+  onReplayBootSequence,
+  userLocation
 }) => {
   const [purgedNotification, setPurgedNotification] = useState(false);
 
@@ -78,6 +79,25 @@ export const Header = ({
 
         {/* Tactical Controls: Compact on Mobile, Expanded on Desktop */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* Live GPS Telemetry Lock Badge */}
+          {userLocation && (
+            <button
+              onClick={() => {
+                triggerHaptic('light');
+                if (userLocation.detectLocation) userLocation.detectLocation();
+              }}
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-mono transition-all ${
+                userLocation.isLive 
+                  ? 'bg-slate-950/80 border-emerald-500/40 text-emerald-300 shadow-sm' 
+                  : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:text-cyan-300'
+              }`}
+              title="Click to refresh exact smartphone GPS lock"
+            >
+              <MapPin className={`w-3.5 h-3.5 ${userLocation.isLive ? 'text-emerald-400 animate-pulse' : 'text-slate-400'}`} />
+              <span className="truncate max-w-[130px] font-bold">{userLocation.locality}</span>
+              {userLocation.accuracy && <span className="text-[9px] text-cyan-400">±{userLocation.accuracy}m</span>}
+            </button>
+          )}
 
           {/* Replay Startup Animation Button */}
           <button

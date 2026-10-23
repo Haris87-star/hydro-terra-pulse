@@ -7,29 +7,58 @@ import {
   AlertTriangle, 
   Volume2, 
   Gauge, 
-  HelpCircle,
   TrendingDown,
-  Zap,
-  Sparkles
+  Zap
 } from 'lucide-react';
 import { triggerHaptic } from '../../utils/haptics';
+
+const computeAutoTriage = (targetId, allStreets) => {
+  const steps = [];
+  let curLow = 1;
+  let curHigh = 24;
+  let stepCount = 0;
+
+  while (curLow < curHigh && stepCount < 5) {
+    stepCount++;
+    const mid = Math.floor((curLow + curHigh) / 2);
+    const st = allStreets.find(s => s.id === mid);
+    const isDownstream = targetId > mid;
+    const nextLow = isDownstream ? mid + 1 : curLow;
+    const nextHigh = isDownstream ? curHigh : mid;
+
+    steps.push({
+      stepNumber: stepCount,
+      testedMidpoint: mid,
+      streetName: st?.name || `Street ${mid}`,
+      previousRange: [curLow, curHigh],
+      newRange: [nextLow, nextHigh],
+      reason: isDownstream ? 'Normal Pressure (>45 PSI)' : 'Pressure Drop (<20 PSI)',
+      actionTaken: isDownstream ? `St ${mid} normal. Narrowed to St [${nextLow}..${nextHigh}]` : `Pressure drop at St ${mid}. Narrowed to St [${nextLow}..${nextHigh}]`
+    });
+
+    curLow = nextLow;
+    curHigh = nextHigh;
+  }
+  return { steps, finalLow: curLow, finalHigh: curHigh };
+};
 
 export const BinarySearchTriage = ({ 
   streets, 
   activeLeakStreetId, 
-  actualLeakStreetId,
+  actualLeakStreetId, 
   onTriageRangeChange, 
-  setTriageRange,
-  onSelectLeakStreet,
-  onLeakPinpointed,
+  setTriageRange, 
+  onSelectLeakStreet, 
+  onLeakPinpointed, 
   onNavigateToAcoustic 
 }) => {
-  const [low, setLow] = useState(1);
-  const [high, setHigh] = useState(24);
-  const [history, setHistory] = useState([]);
-  const [isResolved, setIsResolved] = useState(false);
-
   const leakTargetId = activeLeakStreetId || actualLeakStreetId || 14;
+
+  const initialTriage = computeAutoTriage(leakTargetId, streets);
+  const [low, setLow] = useState(initialTriage.finalLow);
+  const [high, setHigh] = useState(initialTriage.finalHigh);
+  const [history, setHistory] = useState(initialTriage.steps);
+  const [isResolved, setIsResolved] = useState(true);
 
   // Compute current midpoint valve
   const midpoint = Math.floor((low + high) / 2);

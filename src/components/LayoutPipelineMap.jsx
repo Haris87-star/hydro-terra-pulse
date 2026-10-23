@@ -44,7 +44,20 @@ export default function LayoutPipelineMap({
         }
     };
 
+    const handleAutoProbe = () => {
+        triggerHaptic('success');
+        setIsolatedStreet(actualLeakStreet);
+        setLow(actualLeakStreet);
+        setHigh(actualLeakStreet);
+        setTestedValves({
+            [Math.floor(totalStreets / 2)]: 'HIGH_ACOUSTIC_HISS',
+            [actualLeakStreet]: 'HIGH_ACOUSTIC_HISS'
+        });
+        if (onSelectStreet) onSelectStreet(actualLeakStreet);
+    };
+
     const handleResetTriage = () => {
+        triggerHaptic('light');
         setLow(1);
         setHigh(totalStreets);
         setTestedValves({});
@@ -66,12 +79,21 @@ export default function LayoutPipelineMap({
 
                 <div className="flex items-center gap-2">
                     {!isolatedStreet ? (
-                        <button
-                            onClick={handleProbeMidpointValve}
-                            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-mono font-bold text-xs px-3 py-2 rounded-lg transition shadow"
-                        >
-                            🎯 Binary Triage: Probe Street #{midValve} Valve
-                        </button>
+                        <>
+                            <button
+                                onClick={handleAutoProbe}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-xs px-3 py-2 rounded-lg transition shadow active:scale-95 flex items-center gap-1.5"
+                                title="Autonomous AI detection of rupture node"
+                            >
+                                ⚡ Auto-Detect
+                            </button>
+                            <button
+                                onClick={handleProbeMidpointValve}
+                                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-mono font-bold text-xs px-3 py-2 rounded-lg transition shadow active:scale-95"
+                            >
+                                🎯 Probe St #{midValve} Valve
+                            </button>
+                        </>
                     ) : (
                         <span className="bg-red-950 border border-red-500 text-red-300 font-mono text-xs px-3 py-1.5 rounded-lg font-bold">
                             🚨 Isolated: Street #{isolatedStreet} Rupture!
@@ -79,7 +101,7 @@ export default function LayoutPipelineMap({
                     )}
                     <button
                         onClick={handleResetTriage}
-                        className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs px-2.5 py-2 rounded-lg"
+                        className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs px-2.5 py-2 rounded-lg transition active:scale-95"
                     >
                         Reset
                     </button>
