@@ -1,0 +1,80 @@
+{
+  "name": "Kaveri Terra-Pulse: Civic Subsurface Intelligence Grid",
+  "short_name": "TerraPulse",
+  "id": "gov.in.bengaluru.terrapulse",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "window-controls-overlay", "minimal-ui"],
+  "background_color": "#030712",
+  "theme_color": "#030712",
+  "orientation": "any",
+  "description": "Zero-hardware surface-to-subsurface diagnostic platform for Namma Bengaluru water distribution and road infrastructure (BWSSB & BBMP).",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "categories": ["utilities", "productivity", "government", "navigation"],
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "24-Street Digital Twin",
+      "short_name": "Twin",
+      "description": "Inspect 24-street pipeline distribution grid and valve triage",
+      "url": "/?tab=twin",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "M2: Acoustic Valve TDoA",
+      "short_name": "Acoustic TDoA",
+      "description": "Acoustic cross-correlation for sub-meter leak pinpointing",
+      "url": "/?tab=acoustic",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "M3: SubTerra 3D Sonar",
+      "short_name": "3D Sonar",
+      "description": "Interactive WebXR 3D Subsurface cavity void visualizer",
+      "url": "/?tab=subterra",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Civic Field Report",
+      "short_name": "Report",
+      "description": "Generate precision JCB excavation ticket for BBMP & BWSSB",
+      "url": "/?tab=report",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "gov.in.bengaluru.terrapulse",
+      "url": "https://play.google.com/store/apps/details?id=gov.in.bengaluru.terrapulse"
+    }
+  ],
+  "prefer_related_applications": false
+}
