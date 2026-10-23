@@ -2,6 +2,8 @@
 ### Zero-Hardware Surface-to-Subsurface Diagnostic Platform for Namma Bengaluru
 **Municipal Civic-Tech Architecture for BWSSB (Bangalore Water Supply and Sewerage Board) & BBMP (Bruhat Bengaluru Mahanagara Palike)**
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/import?s=https://github.com/Haris87-star/hydro-terra-pulse)
+
 ---
 
 ## 🌊 Overview
