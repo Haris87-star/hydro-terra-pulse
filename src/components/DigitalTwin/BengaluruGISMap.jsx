@@ -50,13 +50,21 @@ export const BengaluruGISMap = ({
             attribution: 'Map data &copy; Google Maps'
           }
         };
-      case 'apple-maps':
+      case 'google-terrain':
         return {
-          url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+          url: 'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
           options: {
             maxZoom: 20,
-            subdomains: ['a', 'b', 'c', 'd'],
-            attribution: 'Apple Maps Style &copy; CARTO / OpenStreetMap'
+            subdomains: ['0', '1', '2', '3'],
+            attribution: 'Terrain &copy; Google Maps'
+          }
+        };
+      case 'civic-streets':
+        return {
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+          options: {
+            maxZoom: 19,
+            attribution: 'Civic Roads &copy; Esri / OpenStreetMap'
           }
         };
       case 'tactical':
@@ -418,17 +426,33 @@ export const BengaluruGISMap = ({
           <button
             onClick={() => {
               triggerHaptic('light');
-              setMapMode('apple-maps');
+              setMapMode('google-terrain');
             }}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
-              mapMode === 'apple-maps'
+              mapMode === 'google-terrain'
                 ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30'
                 : 'text-slate-400 hover:text-white'
             }`}
-            title="Apple Maps Clean Vector Style"
+            title="Google Maps Terrain Elevation"
+          >
+            <Compass className="w-3 h-3" />
+            <span>Google Terrain</span>
+          </button>
+
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              setMapMode('civic-streets');
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
+              mapMode === 'civic-streets'
+                ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+            title="Clean Civic Road Layout"
           >
             <Navigation className="w-3 h-3" />
-            <span>Apple Maps Style</span>
+            <span>Civic Streets</span>
           </button>
 
           <button
