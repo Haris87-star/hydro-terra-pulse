@@ -184,7 +184,7 @@ export default function SubsurfaceVisualizer3D({
     }, [arCameraActive]);
 
     return (
-        <div className="relative w-full h-[520px] bg-[#030712] rounded-2xl overflow-hidden border border-slate-800/80 shadow-2xl hud-border">
+        <div className="relative w-full h-[320px] sm:h-[460px] md:h-[520px] bg-[#030712] rounded-2xl overflow-hidden border border-slate-800/80 shadow-2xl hud-border">
             {/* Optional Live Smartphone Camera Background for X-Ray AR Effect */}
             {arCameraActive && (
                 <video
@@ -197,27 +197,27 @@ export default function SubsurfaceVisualizer3D({
             )}
 
             {/* Top HUD Overlay */}
-            <div className="absolute top-3.5 left-3.5 right-3.5 z-10 flex flex-wrap items-center justify-between gap-2.5 pointer-events-none">
-                <div className="glass-panel px-3.5 py-2 rounded-xl backdrop-blur-xl border border-white/10 pointer-events-auto">
-                    <div className="text-[10px] text-cyan-400 font-mono uppercase tracking-wider font-bold flex items-center gap-1.5">
+            <div className="absolute top-2.5 left-2.5 right-2.5 sm:top-3.5 sm:left-3.5 sm:right-3.5 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+                <div className="glass-panel px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl backdrop-blur-xl border border-white/10 pointer-events-auto">
+                    <div className="text-[9px] sm:text-[10px] text-cyan-400 font-mono uppercase tracking-wider font-bold flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                        SUBTERRA-VISION // 3D WEBXR SUBSURFACE TWIN
+                        SUBTERRA-VISION // 3D TWIN
                     </div>
-                    <div className="text-sm font-bold text-white font-['Plus_Jakarta_Sans',sans-serif] mt-0.5">{streetName}</div>
+                    <div className="text-xs sm:text-sm font-bold text-white font-['Plus_Jakarta_Sans',sans-serif] mt-0.5 truncate max-w-[200px] sm:max-w-none">{streetName}</div>
                 </div>
 
-                <div className="flex items-center gap-2 pointer-events-auto">
-                    <span className="bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono px-3 py-1.5 rounded-xl font-bold">
-                        VOLATILE RAM TWIN
+                <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+                    <span className="bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-[9px] sm:text-[10px] font-mono px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl font-bold hidden xs:inline">
+                        VOLATILE RAM
                     </span>
                     <button
                         onClick={() => setArCameraActive(!arCameraActive)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shadow-md ${arCameraActive
+                        className={`px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-mono font-bold transition-all shadow-md ${arCameraActive
                                 ? 'bg-red-600 hover:bg-red-500 text-white border border-red-400/50'
                                 : 'btn-tactical-primary'
                             }`}
                     >
-                        {arCameraActive ? 'Disable AR Camera' : '📷 Launch AR X-Ray'}
+                        {arCameraActive ? 'Disable AR' : '📷 AR X-Ray'}
                     </button>
                 </div>
             </div>
@@ -265,22 +265,22 @@ export default function SubsurfaceVisualizer3D({
             </Canvas>
 
             {/* Bottom Legend Bar */}
-            <div className="absolute bottom-3.5 left-3.5 right-3.5 z-10 flex items-center justify-between glass-panel px-4 py-2.5 rounded-xl text-[11px] font-mono text-slate-300">
-                <div className="flex items-center gap-4">
-                    <span className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block shadow-[0_0_8px_rgba(6,182,212,0.8)]"></span>
-                        Feeder Trunk (-1.8m)
+            <div className="absolute bottom-2 left-2 right-2 sm:bottom-3.5 sm:left-3.5 sm:right-3.5 z-10 flex flex-wrap items-center justify-between glass-panel px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[9px] sm:text-[11px] font-mono text-slate-300 gap-1.5">
+                <div className="flex items-center gap-2.5 sm:gap-4 flex-wrap">
+                    <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-cyan-400 inline-block shadow-[0_0_8px_rgba(6,182,212,0.8)]"></span>
+                        Trunk (-1.8m)
                     </span>
-                    <span className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>
-                        TDoA Rupture Node
+                    <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 inline-block shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>
+                        TDoA Rupture
                     </span>
-                    <span className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block shadow-[0_0_8px_rgba(245,158,11,0.8)]"></span>
-                        Eroded Sinkhole Void
+                    <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-400 inline-block shadow-[0_0_8px_rgba(245,158,11,0.8)]"></span>
+                        Void Hazard
                     </span>
                 </div>
-                <div className="text-slate-400 hidden sm:block">Orbit: Left Click Drag • Pan: Right Click • Zoom: Scroll</div>
+                <div className="text-slate-400 hidden md:block">Orbit: Drag • Zoom: Scroll</div>
             </div>
         </div>
     );

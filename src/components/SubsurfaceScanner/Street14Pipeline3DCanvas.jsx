@@ -207,6 +207,10 @@ export const Street14Pipeline3DCanvas = ({
       prevMouseX = e.clientX;
       prevMouseY = e.clientY;
     };
+    let prevTouchX = 0;
+    let prevTouchY = 0;
+    let initialPinchDist = 0;
+
     const onMouseMove = (e) => {
       if (!isMouseDown) return;
       const dx = e.clientX - prevMouseX;
@@ -218,6 +222,35 @@ export const Street14Pipeline3DCanvas = ({
     };
     const onMouseUp = () => { isMouseDown = false; };
 
+    const onTouchStart = (e) => {
+      if (e.touches.length === 1) {
+        prevTouchX = e.touches[0].clientX;
+        prevTouchY = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        initialPinchDist = Math.hypot(dx, dy);
+      }
+    };
+
+    const onTouchMove = (e) => {
+      if (e.touches.length === 1) {
+        const dx = e.touches[0].clientX - prevTouchX;
+        const dy = e.touches[0].clientY - prevTouchY;
+        rotY += dx * 0.008;
+        rotX = Math.max(-0.2, Math.min(1.2, rotX + dy * 0.008));
+        prevTouchX = e.touches[0].clientX;
+        prevTouchY = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const delta = (initialPinchDist - dist) * 0.04;
+        zoomDist = Math.max(6, Math.min(22, zoomDist + delta));
+        initialPinchDist = dist;
+      }
+    };
+
     const onWheel = (e) => {
       zoomDist = Math.max(6, Math.min(22, zoomDist + e.deltaY * 0.01));
     };
@@ -225,6 +258,8 @@ export const Street14Pipeline3DCanvas = ({
     canvas.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('touchstart', onTouchStart, { passive: true });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: true });
     canvas.addEventListener('wheel', onWheel, { passive: true });
 
     // Animation Render Loop
@@ -292,6 +327,8 @@ export const Street14Pipeline3DCanvas = ({
       canvas.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
+      canvas.removeEventListener('touchstart', onTouchStart);
+      canvas.removeEventListener('touchmove', onTouchMove);
       canvas.removeEventListener('wheel', onWheel);
       renderer.dispose();
     };
@@ -300,75 +337,75 @@ export const Street14Pipeline3DCanvas = ({
   return (
     <div className="glass-panel hud-border rounded-2xl overflow-hidden shadow-2xl relative border-cyan-500/40">
       {/* HUD Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-3.5 bg-slate-950/85 backdrop-blur-md border-b border-slate-700/60">
-        <div className="flex items-center space-x-2.5">
-          <Rotate3d className="w-4 h-4 text-cyan-400 animate-spin" />
-          <span className="text-xs font-mono font-bold text-white tracking-wider flex items-center gap-1.5">
-            THREE.JS &lt;CANVAS&gt; // <span className="text-cyan-300">{streetName.toUpperCase()}</span>
+      <div className="flex flex-wrap items-center justify-between gap-2 p-3 sm:p-3.5 bg-slate-950/85 backdrop-blur-md border-b border-slate-700/60">
+        <div className="flex items-center space-x-2.5 min-w-0">
+          <Rotate3d className="w-4 h-4 text-cyan-400 animate-spin shrink-0" />
+          <span className="text-xs font-mono font-bold text-white tracking-wider truncate">
+            THREE.JS // <span className="text-cyan-300">{streetName.toUpperCase()}</span>
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs font-mono">
           <button
             onClick={() => setShowRoadSurface(!showRoadSurface)}
-            className={`px-3 py-1 rounded-lg border text-[10px] font-bold transition-all ${
+            className={`px-2.5 sm:px-3 py-1 rounded-lg border text-[10px] font-bold transition-all active:scale-95 ${
               showRoadSurface ? 'bg-cyan-950/80 text-cyan-300 border-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.4)]' : 'bg-slate-900 text-slate-500 border-slate-800'
             }`}
           >
-            ROAD GRID (0.0m)
+            ROAD GRID
           </button>
           <button
             onClick={() => setIsWireframe(!isWireframe)}
-            className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold transition-all"
+            className="px-2.5 sm:px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold transition-all active:scale-95"
           >
-            {isWireframe ? 'WIREFRAME CYLINDER' : 'SOLID CYLINDER'}
+            {isWireframe ? 'WIREFRAME' : 'SOLID'}
           </button>
           <button
             onClick={() => setShowVoidCavity(!showVoidCavity)}
-            className={`px-3 py-1 rounded-lg border text-[10px] font-bold transition-all ${
+            className={`px-2.5 sm:px-3 py-1 rounded-lg border text-[10px] font-bold transition-all active:scale-95 ${
               showVoidCavity ? 'bg-amber-950/80 text-amber-300 border-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.4)]' : 'bg-slate-900 text-slate-500 border-slate-800'
             }`}
           >
-            AMBER SINKHOLE MESH
+            SINKHOLE MESH
           </button>
         </div>
       </div>
 
       {/* Three.js <Canvas> Viewport */}
       <div className="relative">
-        <canvas ref={canvasRef} className="w-full h-[420px] block cursor-grab active:cursor-grabbing bg-[#050811]" />
+        <canvas ref={canvasRef} className="w-full h-[280px] sm:h-[360px] md:h-[420px] block cursor-grab active:cursor-grabbing bg-[#050811] touch-none" />
 
         {/* Tactical HUD Overlay with Exact Coordinates */}
-        <div className="absolute top-4 left-4 bg-slate-950/85 backdrop-blur-md border border-cyan-500/40 p-3.5 rounded-2xl font-mono text-[11px] space-y-1.5 pointer-events-none shadow-2xl">
-          <div className="text-cyan-400 font-bold flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.9)] animate-ping" />
-            STREET 14 PIPELINE DIGITAL TWIN
+        <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 max-w-[calc(100%-1.25rem)] sm:max-w-none bg-slate-950/85 backdrop-blur-md border border-cyan-500/40 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl font-mono text-[9px] sm:text-[11px] space-y-1 pointer-events-none shadow-2xl">
+          <div className="text-cyan-400 font-bold flex items-center gap-1.5 sm:gap-2">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.9)] animate-ping" />
+            STREET 14 PIPELINE TWIN
           </div>
-          <div className="text-slate-300">
+          <div className="text-slate-300 truncate">
             Cylinder: 3D Ductile Iron (L = {pipeLengthMeters}m • Ø 300mm)
           </div>
           <div className="text-rose-400 font-extrabold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)] animate-pulse" />
-            PULSING RED SPHERE: distanceFromValveA = {distanceFromValveA}m
+            RUPTURE: distanceFromValveA = {distanceFromValveA}m
           </div>
-          <div className="text-slate-400 text-[10px]">
-            Valve A: 0.0m (Green Collar) • Valve B: {pipeLengthMeters}m (Amber Collar)
+          <div className="text-slate-400 text-[9px] sm:text-[10px] hidden xs:block">
+            Valve A: 0.0m (Green) • Valve B: {pipeLengthMeters}m (Amber)
           </div>
           {isVoidPresent ? (
-            <div className="text-amber-400 font-bold text-[10px] pt-1 border-t border-slate-800">
-              Sinkhole Cavity: Amber Mesh (Radius ~{voidRadiusMeters}m)
+            <div className="text-amber-400 font-bold text-[9px] sm:text-[10px] pt-1 border-t border-slate-800">
+              Sinkhole Cavity: Amber Mesh (~{voidRadiusMeters}m)
             </div>
           ) : (
-            <div className="text-emerald-400 font-bold text-[10px] pt-1 border-t border-slate-800">
-              Subgrade: Compacted Soil (No Cavity Detected)
+            <div className="text-emerald-400 font-bold text-[9px] sm:text-[10px] pt-1 border-t border-slate-800">
+              Subgrade: Compacted Soil (Stable)
             </div>
           )}
         </div>
 
         {/* Orbit instruction */}
-        <div className="absolute bottom-4 right-4 bg-slate-950/85 backdrop-blur-md border border-slate-700/80 text-slate-300 font-mono text-[10px] px-3 py-1.5 rounded-xl pointer-events-none flex items-center gap-1.5 shadow-lg">
-          <Compass className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Click & Drag to Orbit 3D Scene • Scroll to Zoom</span>
+        <div className="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 bg-slate-950/85 backdrop-blur-md border border-slate-700/80 text-slate-300 font-mono text-[9px] sm:text-[10px] px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl pointer-events-none flex items-center gap-1.5 shadow-lg">
+          <Compass className="w-3 h-3 text-cyan-400" />
+          <span>Touch & Drag to Orbit • Pinch to Zoom</span>
         </div>
       </div>
     </div>

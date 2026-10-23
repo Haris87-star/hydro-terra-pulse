@@ -43,3 +43,5 @@ android/app/*.iml
 # Root APK duplicate (tracked in public/download/)
 /*.apk
 
+
+.vercel

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Radio, 
   AlertTriangle, 
@@ -11,8 +11,10 @@ import {
   Filter,
   Volume2,
   ArrowRight,
-  ShieldAlert
+  ShieldAlert,
+  Disc
 } from 'lucide-react';
+import { triggerHaptic } from '../../utils/haptics';
 
 export const PipelineTwin = ({ 
   streets, 
@@ -23,17 +25,29 @@ export const PipelineTwin = ({
   valveStates,
   onToggleValve
 }) => {
-  const [selectedStreet, setSelectedStreet] = useState(null);
+  const [selectedStreetId, setSelectedStreetId] = useState(activeLeakStreetId || 14);
+  const [turningValve, setTurningValve] = useState(null);
 
-  // Default to selecting the active leak street
+  // Sync selected ID when activeLeakStreetId changes
   useEffect(() => {
     if (activeLeakStreetId) {
-      const match = streets.find(s => s.id === activeLeakStreetId);
-      if (match) setSelectedStreet(match);
-    } else {
-      setSelectedStreet(streets[6]); // Default Street 7
+      setSelectedStreetId(activeLeakStreetId);
     }
-  }, [activeLeakStreetId, streets]);
+  }, [activeLeakStreetId]);
+
+  // Dynamically derive selectedStreet from current streets state so valve changes reflect immediately
+  const selectedStreet = useMemo(() => {
+    return streets.find(s => s.id === selectedStreetId) || streets[0];
+  }, [streets, selectedStreetId]);
+
+  const handleValveClick = (valve) => {
+    triggerHaptic('medium');
+    setTurningValve(valve);
+    setTimeout(() => setTurningValve(null), 450);
+    if (onToggleValve && selectedStreet) {
+      onToggleValve(selectedStreet.id, valve);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -69,23 +83,23 @@ export const PipelineTwin = ({
 
         {/* 24-Street Interactive Grid / Radial Map */}
         <div className="space-y-4">
-          {/* Master Borewell Node */}
+          {/* Master Borewell Node: Responsive on all screen sizes */}
           <div className="flex items-center justify-center">
-            <div className="px-5 py-3 rounded-2xl bg-gradient-to-r from-cyan-950/80 via-slate-900 to-cyan-950/80 border border-cyan-500/50 shadow-xl shadow-cyan-500/10 flex items-center space-x-4">
-              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/60 shadow-lg shadow-cyan-400/20">
+            <div className="w-full max-w-xl mx-auto p-3 sm:px-5 sm:py-3 rounded-2xl bg-gradient-to-r from-cyan-950/80 via-slate-900 to-cyan-950/80 border border-cyan-500/50 shadow-xl shadow-cyan-500/10 flex flex-col sm:flex-row items-center gap-2.5 sm:gap-4">
+              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/60 shadow-lg shadow-cyan-400/20 shrink-0">
                 <Radio className="w-5 h-5 text-cyan-300 animate-pulse" />
                 <div className="absolute -inset-0.5 rounded-xl border border-cyan-400/40 animate-pulse-glow" />
               </div>
-              <div>
-                <div className="text-xs font-bold text-white tracking-wide font-mono flex items-center gap-2">
+              <div className="text-center sm:text-left min-w-0">
+                <div className="text-xs font-bold text-white tracking-wide font-mono flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
                   <span>BOREWELL MASTER NODE // BWSSB FEEDER 01</span>
                   <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50">ONLINE</span>
                 </div>
-                <div className="text-[11px] font-mono text-cyan-300 flex items-center gap-3 mt-0.5">
+                <div className="text-[10px] sm:text-[11px] font-mono text-cyan-300 flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 mt-1">
                   <span>P: <strong className="text-white">56.4 PSI</strong></span>
-                  <span className="text-slate-600">•</span>
+                  <span className="text-slate-600 hidden xs:inline">•</span>
                   <span>Flow: <strong className="text-white">1,420 L/min</strong></span>
-                  <span className="text-slate-600">•</span>
+                  <span className="text-slate-600 hidden xs:inline">•</span>
                   <span>Impeller: <strong className="text-emerald-400">15 HP Nominal</strong></span>
                 </div>
               </div>
@@ -98,7 +112,7 @@ export const PipelineTwin = ({
           </div>
 
           {/* 24 Sequential Street Pipeline Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 max-h-[460px] overflow-y-auto p-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-2.5 max-h-[460px] overflow-y-auto p-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
             {streets.map((street) => {
               const isLeakTarget = street.id === activeLeakStreetId;
               const isSelected = selectedStreet?.id === street.id;
@@ -123,10 +137,11 @@ export const PipelineTwin = ({
                 <div
                   key={street.id}
                   onClick={() => {
-                    setSelectedStreet(street);
+                    triggerHaptic('light');
+                    setSelectedStreetId(street.id);
                     setActiveLeakStreetId(street.id);
                   }}
-                  className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${cardStyle}`}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:scale-95 ${cardStyle}`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-mono font-bold text-white">
@@ -159,11 +174,11 @@ export const PipelineTwin = ({
                     <div className="flex items-center space-x-1.5">
                       <span 
                         title={`Valve A: ${street.valveAOpen ? 'Open' : 'Closed'}`}
-                        className={`w-2 h-2 rounded-full ${street.valveAOpen ? 'bg-emerald-400' : 'bg-amber-400'} ring-2 ring-slate-900`} 
+                        className={`w-2.5 h-2.5 rounded-full transition-all ${street.valveAOpen ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' : 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]'} ring-2 ring-slate-900`} 
                       />
                       <span 
                         title={`Valve B: ${street.valveBOpen ? 'Open' : 'Closed'}`}
-                        className={`w-2 h-2 rounded-full ${street.valveBOpen ? 'bg-emerald-400' : 'bg-amber-400'} ring-2 ring-slate-900`} 
+                        className={`w-2.5 h-2.5 rounded-full transition-all ${street.valveBOpen ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' : 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]'} ring-2 ring-slate-900`} 
                       />
                     </div>
                   </div>
@@ -173,8 +188,8 @@ export const PipelineTwin = ({
           </div>
 
           {/* Interactive Legend */}
-          <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-slate-400 pt-3 border-t border-slate-800/80">
-            <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-slate-400 pt-3 border-t border-slate-800/80 gap-2">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Normal Pressure (&gt;45 PSI)
               </span>
@@ -185,13 +200,13 @@ export const PipelineTwin = ({
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" /> Rupture Detected (&lt;18 PSI)
               </span>
             </div>
-            <span>24 Ball/Gate Spindles Monitored</span>
+            <span>24 Spindles Monitored</span>
           </div>
         </div>
       </div>
 
       {/* Selected Street & Valve Inspection Panel */}
-      <div className="lg:col-span-4 glass-panel rounded-2xl p-5 flex flex-col justify-between space-y-4">
+      <div className="lg:col-span-4 glass-panel rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4">
         {selectedStreet ? (
           <div className="space-y-4">
             <div className="border-b border-slate-800/80 pb-3">
@@ -236,50 +251,93 @@ export const PipelineTwin = ({
             {/* Clickable Gate Valves: Valve A and Valve B */}
             <div className="space-y-2.5 pt-1">
               <div className="text-xs font-mono font-bold text-slate-300 flex items-center justify-between">
-                <span>GATE-VALVE CONTACT TAPS</span>
-                <span className="text-[10px] text-slate-400">Tap to Toggle</span>
+                <span className="flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                  GATE-VALVE CONTACT TAPS
+                </span>
+                <span className="text-[10px] text-cyan-300 bg-cyan-950/60 px-2 py-0.5 rounded-full border border-cyan-500/40">
+                  Tap card to toggle
+                </span>
               </div>
 
               {/* Valve A Card */}
               <div 
-                onClick={() => onToggleValve(selectedStreet.id, 'valveA')}
-                className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/60 cursor-pointer transition-all flex items-center justify-between group"
+                role="button"
+                tabIndex={0}
+                onClick={() => handleValveClick('valveA')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleValveClick('valveA'); }}
+                className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 flex items-center justify-between group active:scale-[0.98] ${
+                  selectedStreet.valveAOpen 
+                    ? 'bg-slate-900/90 border-slate-700/80 hover:border-emerald-500/70 shadow-sm' 
+                    : 'bg-red-950/40 border-red-500/70 shadow-md shadow-red-950/30'
+                }`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-3.5 h-3.5 rounded-full ${selectedStreet.valveAOpen ? 'bg-emerald-400' : 'bg-red-400'} ring-4 ring-slate-950`} />
+                  <div className={`relative flex items-center justify-center w-8 h-8 rounded-lg ${
+                    selectedStreet.valveAOpen ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                  }`}>
+                    <Disc className={`w-4 h-4 transition-transform ${turningValve === 'valveA' ? 'animate-valve-turn' : ''}`} />
+                    <div className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${
+                      selectedStreet.valveAOpen ? 'bg-emerald-400' : 'bg-red-500'
+                    }`} />
+                  </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">
-                      Valve A (Upstream Gate)
+                    <div className="text-xs font-bold text-slate-100 group-hover:text-cyan-300 transition-colors flex items-center gap-1.5">
+                      <span>Valve A (Upstream Gate)</span>
                     </div>
                     <div className="text-[10px] font-mono text-slate-400">Position 0.0m • Ch: Sensor A Contact</div>
                   </div>
                 </div>
-                <span className={`text-[10px] font-mono px-2.5 py-1 rounded-lg font-bold border ${
-                  selectedStreet.valveAOpen ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40' : 'bg-red-950 text-red-300 border-red-500/40'
-                }`}>
-                  {selectedStreet.valveAOpen ? 'OPEN' : 'CLOSED'}
-                </span>
+                <div className="text-right">
+                  <span className={`text-[10px] font-mono px-2.5 py-1 rounded-lg font-bold border inline-block transition-all ${
+                    selectedStreet.valveAOpen 
+                      ? 'bg-emerald-950 text-emerald-300 border-emerald-500/50 shadow-[0_0_8px_rgba(52,211,153,0.3)]' 
+                      : 'bg-red-950 text-red-300 border-red-500/50 shadow-[0_0_8px_rgba(239,68,68,0.3)]'
+                  }`}>
+                    {selectedStreet.valveAOpen ? '● OPEN' : '✕ CLOSED'}
+                  </span>
+                  <div className="text-[9px] font-mono text-slate-500 mt-0.5">Tap to {selectedStreet.valveAOpen ? 'Shut' : 'Open'}</div>
+                </div>
               </div>
 
               {/* Valve B Card */}
               <div 
-                onClick={() => onToggleValve(selectedStreet.id, 'valveB')}
-                className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/60 cursor-pointer transition-all flex items-center justify-between group"
+                role="button"
+                tabIndex={0}
+                onClick={() => handleValveClick('valveB')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleValveClick('valveB'); }}
+                className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 flex items-center justify-between group active:scale-[0.98] ${
+                  selectedStreet.valveBOpen 
+                    ? 'bg-slate-900/90 border-slate-700/80 hover:border-emerald-500/70 shadow-sm' 
+                    : 'bg-red-950/40 border-red-500/70 shadow-md shadow-red-950/30'
+                }`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-3.5 h-3.5 rounded-full ${selectedStreet.valveBOpen ? 'bg-emerald-400' : 'bg-red-400'} ring-4 ring-slate-950`} />
+                  <div className={`relative flex items-center justify-center w-8 h-8 rounded-lg ${
+                    selectedStreet.valveBOpen ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                  }`}>
+                    <Disc className={`w-4 h-4 transition-transform ${turningValve === 'valveB' ? 'animate-valve-turn' : ''}`} />
+                    <div className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${
+                      selectedStreet.valveBOpen ? 'bg-emerald-400' : 'bg-red-500'
+                    }`} />
+                  </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">
-                      Valve B (Downstream Gate)
+                    <div className="text-xs font-bold text-slate-100 group-hover:text-cyan-300 transition-colors flex items-center gap-1.5">
+                      <span>Valve B (Downstream Gate)</span>
                     </div>
                     <div className="text-[10px] font-mono text-slate-400">Position {selectedStreet.lengthMeters}m • Ch: Sensor B Contact</div>
                   </div>
                 </div>
-                <span className={`text-[10px] font-mono px-2.5 py-1 rounded-lg font-bold border ${
-                  selectedStreet.valveBOpen ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40' : 'bg-red-950 text-red-300 border-red-500/40'
-                }`}>
-                  {selectedStreet.valveBOpen ? 'OPEN' : 'CLOSED'}
-                </span>
+                <div className="text-right">
+                  <span className={`text-[10px] font-mono px-2.5 py-1 rounded-lg font-bold border inline-block transition-all ${
+                    selectedStreet.valveBOpen 
+                      ? 'bg-emerald-950 text-emerald-300 border-emerald-500/50 shadow-[0_0_8px_rgba(52,211,153,0.3)]' 
+                      : 'bg-red-950 text-red-300 border-red-500/50 shadow-[0_0_8px_rgba(239,68,68,0.3)]'
+                  }`}>
+                    {selectedStreet.valveBOpen ? '● OPEN' : '✕ CLOSED'}
+                  </span>
+                  <div className="text-[9px] font-mono text-slate-500 mt-0.5">Tap to {selectedStreet.valveBOpen ? 'Shut' : 'Open'}</div>
+                </div>
               </div>
             </div>
 

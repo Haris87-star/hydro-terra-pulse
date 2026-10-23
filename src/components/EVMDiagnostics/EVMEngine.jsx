@@ -331,32 +331,49 @@ export const EVMEngine = ({ isSyntheticDemo }) => {
     ctx.fillText('TEMPORAL IIR CAVITATION ENERGY OVER TIME', 6, 12);
   };
 
-  // Dragging 160x160 ROI
-  const handleMouseDown = (e) => {
-    setIsDraggingRoi(true);
-    updateRoiFromEvent(e);
-  };
-  const handleMouseMove = (e) => {
-    if (!isDraggingRoi) return;
-    updateRoiFromEvent(e);
-  };
-  const handleMouseUp = () => {
-    setIsDraggingRoi(false);
-  };
-  const updateRoiFromEvent = (e) => {
+  // Dragging 160x160 ROI (Mouse & Touch for smartphones)
+  const updateRoiFromCoords = (clientX, clientY) => {
     const canvas = mainCanvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const scaleX = 640 / rect.width;
     const scaleY = 480 / rect.height;
 
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
+    const clickX = (clientX - rect.left) * scaleX;
+    const clickY = (clientY - rect.top) * scaleY;
 
     setRoiPos({
       x: Math.max(0, Math.min(640 - 160, clickX - 80)),
       y: Math.max(0, Math.min(480 - 160, clickY - 80))
     });
+  };
+
+  const handleMouseDown = (e) => {
+    setIsDraggingRoi(true);
+    updateRoiFromCoords(e.clientX, e.clientY);
+  };
+  const handleMouseMove = (e) => {
+    if (!isDraggingRoi) return;
+    updateRoiFromCoords(e.clientX, e.clientY);
+  };
+  const handleMouseUp = () => {
+    setIsDraggingRoi(false);
+  };
+
+  const handleTouchStart = (e) => {
+    setIsDraggingRoi(true);
+    if (e.touches && e.touches.length > 0) {
+      updateRoiFromCoords(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+  const handleTouchMove = (e) => {
+    if (!isDraggingRoi) return;
+    if (e.touches && e.touches.length > 0) {
+      updateRoiFromCoords(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+  const handleTouchEnd = () => {
+    setIsDraggingRoi(false);
   };
 
   return (
@@ -405,7 +422,10 @@ export const EVMEngine = ({ isSyntheticDemo }) => {
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
-              className="w-full h-auto block"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              className="w-full h-auto block touch-none"
             />
             <div className="absolute top-3 left-3 text-[10px] font-mono text-cyan-300/90 pointer-events-none bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-cyan-500/40">
               EVM IIR ACTIVE: Low {cutoffLow} | High {cutoffHigh}

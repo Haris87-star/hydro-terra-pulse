@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { triggerHaptic } from '../utils/haptics';
 
 export default function LayoutPipelineMap({
     totalStreets = 24,
@@ -16,6 +17,7 @@ export default function LayoutPipelineMap({
 
     // Simulate touching the smartphone to the midpoint street gate valve
     const handleProbeMidpointValve = () => {
+        triggerHaptic('medium');
         if (isolatedStreet) return;
 
         // If leak is downstream (or at) midValve, acoustic hiss/pressure drop is detected

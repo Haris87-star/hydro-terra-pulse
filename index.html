@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Kaveri Terra-Pulse | Bengaluru Civic Hydro-Acoustic Subsurface Intelligence Grid</title>
   <meta name="description"
     content="Zero-hardware surface-to-subsurface diagnostic platform for Namma Bengaluru's water distribution and road infrastructure (BWSSB & BBMP)." />
@@ -20,12 +20,17 @@
   <link rel="apple-touch-icon" href="/icon-192.svg" />
   <link rel="manifest" href="/manifest.json" />
 
-  <!-- Google Fonts: Plus Jakarta Sans (Headings), Inter (UI), JetBrains Mono (Code/Telemetry) -->
+  <!-- Google Fonts: Non-blocking asynchronous loading for instantaneous FCP -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
-    rel="stylesheet">
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+    media="print"
+    onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" />
+  </noscript>
 
   <script>
     if ('serviceWorker' in navigator) {
@@ -38,7 +43,7 @@
   </script>
 </head>
 
-<body class="bg-[#030712] text-slate-100 antialiased selection:bg-cyan-500 selection:text-black min-h-screen">
+<body class="bg-[#030712] text-slate-100 antialiased selection:bg-cyan-500 selection:text-black min-h-[100dvh] w-full overflow-x-hidden">
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

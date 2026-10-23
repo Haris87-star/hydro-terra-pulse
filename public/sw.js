@@ -49,7 +49,27 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request).catch(() => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request).then((networkResponse) => {
+        // Cache successful static chunk requests (JS, CSS, fonts, SVG)
+        if (
+          networkResponse &&
+          networkResponse.status === 200 &&
+          (event.request.url.includes('/assets/') ||
+           event.request.url.endsWith('.js') ||
+           event.request.url.endsWith('.css') ||
+           event.request.url.endsWith('.svg') ||
+           event.request.url.endsWith('.woff2'))
+        ) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {
         if (event.request.mode === 'navigate') {
           return caches.match('/index.html');
         }

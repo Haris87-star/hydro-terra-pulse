@@ -8,14 +8,20 @@ import {
   Volume2, 
   Gauge, 
   HelpCircle,
-  TrendingDown
+  TrendingDown,
+  Zap,
+  Sparkles
 } from 'lucide-react';
+import { triggerHaptic } from '../../utils/haptics';
 
 export const BinarySearchTriage = ({ 
   streets, 
   activeLeakStreetId, 
+  actualLeakStreetId,
   onTriageRangeChange, 
+  setTriageRange,
   onSelectLeakStreet,
+  onLeakPinpointed,
   onNavigateToAcoustic 
 }) => {
   const [low, setLow] = useState(1);
@@ -23,11 +29,24 @@ export const BinarySearchTriage = ({
   const [history, setHistory] = useState([]);
   const [isResolved, setIsResolved] = useState(false);
 
+  const leakTargetId = activeLeakStreetId || actualLeakStreetId || 14;
+
   // Compute current midpoint valve
   const midpoint = Math.floor((low + high) / 2);
   const targetStreet = streets.find(s => s.id === midpoint);
 
+  const notifyRangeChange = (newLow, newHigh) => {
+    if (onTriageRangeChange) onTriageRangeChange([newLow, newHigh]);
+    if (setTriageRange) setTriageRange([newLow, newHigh]);
+  };
+
+  const notifyStreetSelected = (streetId) => {
+    if (onSelectLeakStreet) onSelectLeakStreet(streetId);
+    if (onLeakPinpointed) onLeakPinpointed(streetId);
+  };
+
   const updateRange = (newLow, newHigh, reason, actionTaken) => {
+    triggerHaptic('medium');
     const step = {
       stepNumber: history.length + 1,
       testedMidpoint: midpoint,
@@ -41,18 +60,17 @@ export const BinarySearchTriage = ({
     setHistory([...history, step]);
     setLow(newLow);
     setHigh(newHigh);
-    onTriageRangeChange([newLow, newHigh]);
+    notifyRangeChange(newLow, newHigh);
 
     if (newLow === newHigh) {
       setIsResolved(true);
-      onSelectLeakStreet(newLow);
+      notifyStreetSelected(newLow);
     }
   };
 
   const handlePressureDropped = () => {
-    const trueLeak = activeLeakStreetId || 14;
-    
-    if (trueLeak <= midpoint) {
+    triggerHaptic('medium');
+    if (leakTargetId <= midpoint) {
       updateRange(low, midpoint, 'Low Pressure (<20 PSI)', `Pressure drop confirmed at St ${midpoint}. Search narrowed to lower branch.`);
     } else {
       updateRange(midpoint + 1, high, 'Pressure Gradient Shift', `Pressure drop observed upstream. Narrowing to higher branch.`);
@@ -60,24 +78,61 @@ export const BinarySearchTriage = ({
   };
 
   const handlePressureNormal = () => {
-    const trueLeak = activeLeakStreetId || 14;
-
-    if (trueLeak > midpoint) {
+    triggerHaptic('medium');
+    if (leakTargetId > midpoint) {
       updateRange(midpoint + 1, high, 'Normal Pressure (>45 PSI)', `St ${midpoint} healthy. Rupture is in downstream branches.`);
     } else {
       updateRange(low, midpoint, 'Normal Pressure (>45 PSI)', `Downstream normal. Narrowing to upstream branches.`);
     }
   };
 
+  const handleAutoTriage = () => {
+    triggerHaptic('success');
+    const steps = [];
+    let curLow = 1;
+    let curHigh = 24;
+    let stepCount = 0;
+
+    while (curLow < curHigh && stepCount < 5) {
+      stepCount++;
+      const mid = Math.floor((curLow + curHigh) / 2);
+      const st = streets.find(s => s.id === mid);
+      const isDownstream = leakTargetId > mid;
+      const nextLow = isDownstream ? mid + 1 : curLow;
+      const nextHigh = isDownstream ? curHigh : mid;
+
+      steps.push({
+        stepNumber: stepCount,
+        testedMidpoint: mid,
+        streetName: st?.name || `Street ${mid}`,
+        previousRange: [curLow, curHigh],
+        newRange: [nextLow, nextHigh],
+        reason: isDownstream ? 'Normal Pressure (>45 PSI)' : 'Pressure Drop (<20 PSI)',
+        actionTaken: isDownstream ? `St ${mid} normal. Narrowed to St [${nextLow}..${nextHigh}]` : `Pressure drop at St ${mid}. Narrowed to St [${nextLow}..${nextHigh}]`
+      });
+
+      curLow = nextLow;
+      curHigh = nextHigh;
+    }
+
+    setHistory(steps);
+    setLow(curLow);
+    setHigh(curHigh);
+    setIsResolved(true);
+    notifyRangeChange(curLow, curHigh);
+    notifyStreetSelected(curLow);
+  };
+
   const handleReset = () => {
+    triggerHaptic('light');
     setLow(1);
     setHigh(24);
     setHistory([]);
     setIsResolved(false);
-    onTriageRangeChange([1, 24]);
+    notifyRangeChange(1, 24);
   };
 
-  const isolatedStreet = streets.find(s => s.id === low);
+  const isolatedStreet = streets.find(s => s.id === low) || streets.find(s => s.id === leakTargetId);
 
   return (
     <div className="glass-panel rounded-2xl p-5 space-y-4">
@@ -97,13 +152,24 @@ export const BinarySearchTriage = ({
           </div>
         </div>
 
-        <button
-          onClick={handleReset}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-mono border border-slate-700/80 transition-all shadow-sm"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span>RESET TRIAGE</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleAutoTriage}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-500/60 text-cyan-200 text-xs font-mono font-bold transition-all shadow-md active:scale-95"
+            title="Automatically run 5-stage binary search to pinpoint rupture in 0.1s"
+          >
+            <Zap className="w-3.5 h-3.5 text-cyan-400" />
+            <span>1-TAP AUTO TRIAGE</span>
+          </button>
+
+          <button
+            onClick={handleReset}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-mono border border-slate-700/80 transition-all shadow-sm active:scale-95"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>RESET</span>
+          </button>
+        </div>
       </div>
 
       {/* Visual Search Space Narrowing Bar */}

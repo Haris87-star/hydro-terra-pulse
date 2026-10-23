@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { MapPin, Navigation, AlertTriangle, Layers } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
+import { MapPin, Navigation, AlertTriangle, Layers, Crosshair } from 'lucide-react';
 
 export const BengaluruGISMap = ({ 
   streets, 
@@ -11,6 +12,7 @@ export const BengaluruGISMap = ({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const layersRef = useRef({ markers: [], lines: [], leakCircle: null });
+  const [tileLoadError, setTileLoadError] = useState(false);
 
   // Center of Namma Bengaluru (Indiranagar / CMH Road / 100ft Road pipeline corridor)
   const BENGALURU_CENTER = [12.9716, 77.6412];
@@ -27,12 +29,19 @@ export const BengaluruGISMap = ({
         attributionControl: false
       });
 
-      // Dark tactical CartoDB / OSM tiles
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      // 100% Free OpenStreetMap Dark-Inverted Tactical Tiles (NO API KEY REQUIRED)
+      const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        subdomains: 'abcd',
-      }).addTo(map);
+        subdomains: ['a', 'b', 'c'],
+        className: 'tactical-dark-map-tiles'
+      });
 
+      tileLayer.on('tileerror', () => {
+        // Fallback indicator if network drops
+        setTileLoadError(true);
+      });
+
+      tileLayer.addTo(map);
       mapInstanceRef.current = map;
     }
 
@@ -175,10 +184,41 @@ export const BengaluruGISMap = ({
         </div>
       </div>
 
-      {/* Map Container */}
+      {/* Map Action Toolbar */}
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <button
+          onClick={() => {
+            const map = mapInstanceRef.current;
+            if (map && activeLeakStreetId) {
+              const leakStreet = streets.find(s => s.id === activeLeakStreetId);
+              if (leakStreet && leakStreet.geoCoordinates.length > 0) {
+                map.flyTo(leakStreet.geoCoordinates[0], 16, { duration: 1.2 });
+              }
+            }
+          }}
+          className="px-3 py-1.5 rounded-lg bg-red-950/80 hover:bg-red-900 border border-red-500/50 text-red-200 text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+        >
+          <Crosshair className="w-3.5 h-3.5 text-red-400" />
+          <span>FOCUS RUPTURE (ST #{activeLeakStreetId})</span>
+        </button>
+
+        <button
+          onClick={() => {
+            const map = mapInstanceRef.current;
+            if (map) {
+              map.flyTo(BENGALURU_CENTER, 14, { duration: 1.0 });
+            }
+          }}
+          className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono transition-all active:scale-95"
+        >
+          RESET ZOOM
+        </button>
+      </div>
+
+      {/* Map Container: Fluid Responsive Height */}
       <div 
         ref={mapContainerRef} 
-        className="w-full h-[420px] rounded-xl overflow-hidden border border-slate-700/80 relative shadow-2xl z-0"
+        className="w-full h-[320px] sm:h-[400px] md:h-[460px] rounded-xl overflow-hidden border border-slate-700/80 relative shadow-2xl z-0"
       />
     </div>
   );

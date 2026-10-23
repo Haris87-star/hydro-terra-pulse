@@ -81,12 +81,12 @@ export const StartupBootSequence = ({ onComplete }) => {
   };
 
   useEffect(() => {
-    // Initial sound
-    playBootChime(520, 'sine', 0.25);
+    // Initial audio cue
+    playBootChime(640, 'sine', 0.15);
     triggerHaptic('sonar');
 
-    const totalDuration = 2800; // 2.8 seconds total boot sequence
-    const intervalTime = 35;
+    const totalDuration = 350; // Ultra-fast 350ms high-tech boot pulse for instant opening
+    const intervalTime = 16;
     const increment = 100 / (totalDuration / intervalTime);
 
     const interval = setInterval(() => {
@@ -99,14 +99,13 @@ export const StartupBootSequence = ({ onComplete }) => {
 
         if (next >= 100) {
           clearInterval(interval);
-          playBootChime(880, 'triangle', 0.35);
+          playBootChime(880, 'triangle', 0.12);
           triggerHaptic('success');
+          try { localStorage.setItem('terrapulse_boot_seen', 'true'); } catch (e) {}
+          setIsFadingOut(true);
           setTimeout(() => {
-            setIsFadingOut(true);
-            setTimeout(() => {
-              if (onComplete) onComplete();
-            }, 600);
-          }, 350);
+            if (onComplete) onComplete();
+          }, 150);
         }
         return next;
       });
@@ -117,15 +116,17 @@ export const StartupBootSequence = ({ onComplete }) => {
 
   const handleSkip = () => {
     triggerHaptic('light');
+    try { localStorage.setItem('terrapulse_boot_seen', 'true'); } catch (e) {}
     setIsFadingOut(true);
     setTimeout(() => {
       if (onComplete) onComplete();
-    }, 300);
+    }, 50);
   };
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#020617] text-slate-100 overflow-hidden select-none transition-all duration-700 ${
+      onClick={handleSkip}
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#020617] text-slate-100 overflow-hidden select-none cursor-pointer transition-all duration-300 ${
         isFadingOut ? 'opacity-0 scale-105 pointer-events-none' : 'opacity-100 scale-100'
       }`}
     >
