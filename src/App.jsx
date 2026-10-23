@@ -3,7 +3,7 @@ import { Header } from './components/Header';
 import { PipelineTwin } from './components/DigitalTwin/PipelineTwin';
 import { StartupBootSequence } from './components/Common/StartupBootSequence';
 import { MobileBottomNav } from './components/Common/MobileBottomNav';
-import { INITIAL_STREETS } from './data/streetsData';
+import { INITIAL_STREETS, getLocalizedStreets } from './data/streetsData';
 import { audioManager } from './utils/AudioContextManager';
 import { triggerHaptic } from './utils/haptics';
 import { useGeolocation } from './hooks/useGeolocation';
@@ -101,6 +101,25 @@ export default function App() {
   const [activeLeakStreetId, setActiveLeakStreetId] = useState(14);
   const [triageRange, setTriageRange] = useState([1, 24]);
   const [valveStates, setValveStates] = useState({});
+
+  // Dynamically project streets onto user's real GPS coordinates when detected outside Indiranagar
+  useEffect(() => {
+    if (userLocation?.isLive && userLocation?.coordinates) {
+      const localized = getLocalizedStreets(userLocation.coordinates);
+      setStreets((prev) =>
+        localized.map((st) => {
+          const existing = prev.find((p) => p.id === st.id);
+          return {
+            ...st,
+            valveAOpen: existing ? existing.valveAOpen : st.valveAOpen,
+            valveBOpen: existing ? existing.valveBOpen : st.valveBOpen,
+            pressure: existing ? existing.pressure : (st.id === activeLeakStreetId ? 18 : st.pressure),
+            isDepressurized: existing ? existing.isDepressurized : (st.id === activeLeakStreetId)
+          };
+        })
+      );
+    }
+  }, [userLocation?.isLive, userLocation?.latitude, userLocation?.longitude, activeLeakStreetId]);
 
   // Audit Log for DPDP Act 2023 Sec 8(7) compliance
   const [auditLogs, setAuditLogs] = useState([

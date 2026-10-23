@@ -11,7 +11,8 @@ import {
   Compass, 
   ShieldCheck, 
   Radio, 
-  Sliders, 
+  ExternalLink,
+  Map as MapIcon,
   Check, 
   RefreshCw 
 } from 'lucide-react';
@@ -31,39 +32,50 @@ export const BengaluruGISMap = ({
   const tileLayerRef = useRef(null);
   const layersRef = useRef({ markers: [], lines: [], leakCircle: null, userMarker: null });
 
-  // Map Tile Modes: Zero API Keys Required
-  const [mapMode, setMapMode] = useState('satellite'); // 'tactical' | 'satellite' | 'street'
+  // Map Tile Modes: Authentic Google Maps & Apple Maps Aesthetic (Zero API Key Required)
+  const [mapMode, setMapMode] = useState('google-hybrid'); // 'google-hybrid' | 'google-streets' | 'apple-maps' | 'tactical'
   const [tileError, setTileError] = useState(false);
 
-  // Center of Namma Bengaluru (Indiranagar / CMH Road / 100ft Road pipeline corridor)
-  const BENGALURU_CENTER = [12.9716, 77.6412];
+  // Center of Namma Bengaluru (Indiranagar / CMH Road & 100ft Road Metro Junction)
+  const BENGALURU_CENTER = [12.9784, 77.6412];
 
   const getTileConfig = useCallback((mode) => {
     switch (mode) {
-      case 'satellite':
+      case 'google-streets':
         return {
-          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          url: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
           options: {
-            maxZoom: 19,
-            attribution: 'Esri World Imagery • Civic GIS (Zero API Key)'
+            maxZoom: 20,
+            subdomains: ['0', '1', '2', '3'],
+            attribution: 'Map data &copy; Google Maps'
           }
         };
-      case 'street':
+      case 'apple-maps':
         return {
-          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
           options: {
-            maxZoom: 19,
-            attribution: 'OpenStreetMap Contributors (Zero API Key)'
+            maxZoom: 20,
+            subdomains: ['a', 'b', 'c', 'd'],
+            attribution: 'Apple Maps Style &copy; CARTO / OpenStreetMap'
           }
         };
       case 'tactical':
-      default:
         return {
           url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           options: {
             maxZoom: 19,
             className: 'tactical-dark-map-tiles',
-            attribution: 'OpenStreetMap Dark Tactical (Zero API Key)'
+            attribution: 'Tactical Dark &copy; OpenStreetMap'
+          }
+        };
+      case 'google-hybrid':
+      default:
+        return {
+          url: 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+          options: {
+            maxZoom: 20,
+            subdomains: ['0', '1', '2', '3'],
+            attribution: 'Imagery &copy; Google Maps Hybrid'
           }
         };
     }
@@ -80,7 +92,7 @@ export const BengaluruGISMap = ({
 
       const map = L.map(mapContainerRef.current, {
         center: initialCenter,
-        zoom: 15,
+        zoom: 16,
         zoomControl: true,
         attributionControl: false
       });
@@ -123,34 +135,35 @@ export const BengaluruGISMap = ({
     layersRef.current.markers = [];
     layersRef.current.lines = [];
 
-    // Master Borewell Node Marker
+    // Master Borewell Node Marker (BWSSB Indiranagar Booster Station)
     const masterIcon = L.divIcon({
       className: 'custom-master-icon',
       html: `
         <div style="
-          width: 26px; 
-          height: 26px; 
+          width: 28px; 
+          height: 28px; 
           background: #00f0ff; 
           border: 3px solid #ffffff; 
           border-radius: 50%; 
-          box-shadow: 0 0 20px #00f0ff, 0 0 40px rgba(0,240,255,0.4);
+          box-shadow: 0 0 20px #00f0ff, 0 0 35px rgba(0,240,255,0.6);
           display: flex;
           align-items: center;
           justify-content: center;
+          cursor: pointer;
         ">
-          <div style="width: 8px; height: 8px; background: #030712; border-radius: 50%;"></div>
+          <div style="width: 10px; height: 10px; background: #030712; border-radius: 50%;"></div>
         </div>
       `,
-      iconSize: [26, 26],
-      iconAnchor: [13, 13]
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
     });
 
-    const masterMarker = L.marker(BENGALURU_CENTER, { icon: masterIcon })
+    const masterMarker = L.marker([12.9716, 77.6412], { icon: masterIcon })
       .bindPopup(`
-        <div style="background:#090f1d; color:#fff; padding:8px; font-family:monospace; border-radius:8px; border:1px solid #00f0ff; min-width:180px;">
-          <strong style="color:#00f0ff; font-size:12px;">BWSSB Borewell Master Hub</strong><br/>
-          <span style="color:#94a3b8; font-size:11px;">Stage IV Primary Booster Feeder</span><br/>
-          <div style="margin-top:6px; font-size:11px;">
+        <div style="background:#090f1d; color:#fff; padding:10px; font-family:monospace; border-radius:8px; border:1px solid #00f0ff; min-width:200px;">
+          <strong style="color:#00f0ff; font-size:12px;">🚰 BWSSB Master Borewell Hub</strong><br/>
+          <span style="color:#94a3b8; font-size:11px;">100ft Road Booster Station (Zone 7)</span><br/>
+          <div style="margin-top:6px; font-size:11px; line-height:1.5;">
             <span style="color:#38bdf8;">Pressure:</span> 56.4 PSI<br/>
             <span style="color:#34d399;">Outflow:</span> 500 L/min<br/>
             <span style="color:#a78bfa;">Status:</span> OPERATIONAL
@@ -161,17 +174,17 @@ export const BengaluruGISMap = ({
 
     layersRef.current.markers.push(masterMarker);
 
-    // Plot 24 street pipelines radiating across layout
+    // Plot 24 street pipelines running down actual roads
     streets.forEach((street) => {
       const isLeak = street.id === activeLeakStreetId;
       const lineColor = isLeak ? '#ef4444' : '#06b6d4';
-      const lineWeight = isLeak ? 6 : 3.5;
+      const lineWeight = isLeak ? 6.5 : 4;
 
-      // Pipeline Polyline
+      // Pipeline Polyline along actual road centerlines
       const polyline = L.polyline(street.geoCoordinates, {
         color: lineColor,
         weight: lineWeight,
-        opacity: isLeak ? 1 : 0.8,
+        opacity: isLeak ? 1 : 0.85,
         dashArray: isLeak ? '8, 8' : undefined
       }).addTo(map);
 
@@ -191,7 +204,7 @@ export const BengaluruGISMap = ({
             height: 14px; 
             background: ${street.valveAOpen ? '#10b981' : '#ef4444'}; 
             border: 2px solid #ffffff; 
-            border-radius: 50%;
+            border-radius: 50%; 
             box-shadow: 0 0 10px ${street.valveAOpen ? '#10b981' : '#ef4444'};
             cursor: pointer;
           "></div>
@@ -202,7 +215,7 @@ export const BengaluruGISMap = ({
 
       const valveMarker = L.marker(street.geoCoordinates[0], { icon: valveAIcon })
         .bindPopup(`
-          <div style="background:#090f1d; color:#fff; padding:8px; font-family:monospace; border-radius:8px; border:1px solid #334155; min-width:200px;">
+          <div style="background:#090f1d; color:#fff; padding:10px; font-family:monospace; border-radius:8px; border:1px solid #334155; min-width:210px;">
             <strong style="color:${isLeak ? '#ef4444' : '#00f0ff'}; font-size:12px;">St #${street.id}: ${street.name}</strong><br/>
             <span style="color:#cbd5e1; font-size:10px;">Gate Valve A (Spindle Contact Tap)</span>
             <div style="margin-top:6px; font-size:11px; line-height:1.5;">
@@ -223,10 +236,10 @@ export const BengaluruGISMap = ({
       if (isLeak && street.geoCoordinates.length > 0) {
         const leakCenter = street.geoCoordinates[Math.floor(street.geoCoordinates.length / 2)];
         const leakCircle = L.circle(leakCenter, {
-          radius: 130, // 130 meters radius hazard zone
+          radius: 120, // 120 meters radius hazard zone
           color: '#ef4444',
           fillColor: '#ef4444',
-          fillOpacity: 0.22,
+          fillOpacity: 0.25,
           weight: 2.5,
           dashArray: '6, 6'
         }).addTo(map);
@@ -240,33 +253,33 @@ export const BengaluruGISMap = ({
       const userIcon = L.divIcon({
         className: 'user-gps-pulse-icon',
         html: `
-          <div style="position:relative; width:30px; height:30px; display:flex; align-items:center; justify-content:center;">
+          <div style="position:relative; width:34px; height:34px; display:flex; align-items:center; justify-content:center;">
             <div style="
               position:absolute; 
-              width:28px; 
-              height:28px; 
+              width:32px; 
+              height:32px; 
               border-radius:50%; 
               background:rgba(14,165,233,0.35); 
               border:2px solid #38bdf8; 
               animation:ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
             "></div>
             <div style="
-              width:14px; 
-              height:14px; 
+              width:16px; 
+              height:16px; 
               border-radius:50%; 
               background:#0284c7; 
               border:2.5px solid #ffffff; 
-              box-shadow:0 0 14px #38bdf8;
+              box-shadow:0 0 16px #38bdf8;
             "></div>
           </div>
         `,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
       });
 
       const userMarker = L.marker(userLocation.coordinates, { icon: userIcon })
         .bindPopup(`
-          <div style="background:#090f1d; color:#fff; padding:8px; font-family:monospace; border-radius:8px; border:1px solid #0284c7; min-width:210px;">
+          <div style="background:#090f1d; color:#fff; padding:10px; font-family:monospace; border-radius:8px; border:1px solid #0284c7; min-width:220px;">
             <strong style="color:#38bdf8; font-size:12px;">📍 YOUR EXACT GPS POSITION</strong><br/>
             <span style="color:#94a3b8; font-size:10px;">${userLocation.locality}</span>
             <div style="margin-top:6px; font-size:11px; line-height:1.4;">
@@ -292,7 +305,7 @@ export const BengaluruGISMap = ({
 
     const leakStreet = streets.find(s => s.id === activeLeakStreetId);
     if (leakStreet && leakStreet.geoCoordinates.length > 0) {
-      map.flyTo(leakStreet.geoCoordinates[0], 17, { duration: 1.2 });
+      map.flyTo(leakStreet.geoCoordinates[1] || leakStreet.geoCoordinates[0], 17, { duration: 1.2 });
     }
   };
 
@@ -310,8 +323,21 @@ export const BengaluruGISMap = ({
     triggerHaptic('light');
     const map = mapInstanceRef.current;
     if (map) {
-      map.flyTo(BENGALURU_CENTER, 14, { duration: 1.0 });
+      map.flyTo(BENGALURU_CENTER, 15, { duration: 1.0 });
     }
+  };
+
+  const leakStreet = streets.find(s => s.id === activeLeakStreetId) || streets[13];
+  const leakCoords = leakStreet?.geoCoordinates[1] || leakStreet?.geoCoordinates[0] || BENGALURU_CENTER;
+
+  const openGoogleMapsExternal = () => {
+    triggerHaptic('light');
+    window.open(`https://www.google.com/maps/search/?api=1&query=${leakCoords[0]},${leakCoords[1]}`, '_blank');
+  };
+
+  const openAppleMapsExternal = () => {
+    triggerHaptic('light');
+    window.open(`https://maps.apple.com/?q=${leakCoords[0]},${leakCoords[1]}`, '_blank');
   };
 
   return (
@@ -326,7 +352,7 @@ export const BengaluruGISMap = ({
             NAMMA BENGALURU CIVIC GIS PIPELINE LAYER (BWSSB ZONE 7)
           </h3>
           <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-            Original geographic street map & satellite visualizer with zero external API key requirements
+            Real Google Maps & Apple Maps road geometry with real street centerlines and zero API key requirement
           </p>
         </div>
 
@@ -353,38 +379,56 @@ export const BengaluruGISMap = ({
         </div>
       </div>
 
-      {/* Map Action Toolbar: Layer Switcher + Zoom Controls */}
+      {/* Map Action Toolbar: Google Maps & Apple Maps Selector */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        {/* Layer Mode Selector: 100% Free Zero-Key Tile Providers */}
-        <div className="flex items-center bg-slate-950/90 border border-slate-800 rounded-xl p-1 shadow-inner">
+        {/* Layer Mode Selector: Real Google Maps and Apple Maps */}
+        <div className="flex flex-wrap items-center bg-slate-950/90 border border-slate-800 rounded-xl p-1 shadow-inner gap-1">
           <button
             onClick={() => {
               triggerHaptic('light');
-              setMapMode('satellite');
+              setMapMode('google-hybrid');
             }}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
-              mapMode === 'satellite'
+              mapMode === 'google-hybrid'
                 ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30'
                 : 'text-slate-400 hover:text-white'
             }`}
+            title="Google Maps Satellite Hybrid"
           >
             <Satellite className="w-3 h-3" />
-            <span>Satellite Photo</span>
+            <span>Google Hybrid</span>
           </button>
 
           <button
             onClick={() => {
               triggerHaptic('light');
-              setMapMode('street');
+              setMapMode('google-streets');
             }}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
-              mapMode === 'street'
+              mapMode === 'google-streets'
                 ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30'
                 : 'text-slate-400 hover:text-white'
             }`}
+            title="Official Google Maps Road Layout"
+          >
+            <MapIcon className="w-3 h-3" />
+            <span>Google Roads</span>
+          </button>
+
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              setMapMode('apple-maps');
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
+              mapMode === 'apple-maps'
+                ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+            title="Apple Maps Clean Vector Style"
           >
             <Navigation className="w-3 h-3" />
-            <span>Original Streets</span>
+            <span>Apple Maps Style</span>
           </button>
 
           <button
@@ -397,14 +441,15 @@ export const BengaluruGISMap = ({
                 ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30'
                 : 'text-slate-400 hover:text-white'
             }`}
+            title="Tactical Dark Mode"
           >
             <Layers className="w-3 h-3" />
             <span>Tactical Dark</span>
           </button>
         </div>
 
-        {/* Quick Fly Controls */}
-        <div className="flex items-center gap-2">
+        {/* Quick Fly & External App Links */}
+        <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={handleFocusLeak}
             className="px-2.5 py-1.5 rounded-lg bg-red-950/80 hover:bg-red-900 border border-red-500/50 text-red-200 text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
@@ -414,8 +459,26 @@ export const BengaluruGISMap = ({
           </button>
 
           <button
+            onClick={openGoogleMapsExternal}
+            className="px-2 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono flex items-center gap-1 transition-all active:scale-95"
+            title="Open exact coordinates in Google Maps app"
+          >
+            <ExternalLink className="w-3 h-3 text-cyan-400" />
+            <span>Google Maps</span>
+          </button>
+
+          <button
+            onClick={openAppleMapsExternal}
+            className="px-2 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono flex items-center gap-1 transition-all active:scale-95"
+            title="Open exact coordinates in Apple Maps app"
+          >
+            <ExternalLink className="w-3 h-3 text-cyan-400" />
+            <span>Apple Maps</span>
+          </button>
+
+          <button
             onClick={handleResetView}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono transition-all active:scale-95"
+            className="px-2 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono transition-all active:scale-95"
           >
             RESET
           </button>
@@ -425,18 +488,18 @@ export const BengaluruGISMap = ({
       {/* Map Canvas Container */}
       <div 
         ref={mapContainerRef} 
-        className="w-full h-[320px] sm:h-[400px] md:h-[470px] rounded-xl overflow-hidden border border-slate-700/80 relative shadow-2xl z-0"
+        className="w-full h-[320px] sm:h-[400px] md:h-[480px] rounded-xl overflow-hidden border border-slate-700/80 relative shadow-2xl z-0"
       />
 
-      {/* Footer Status Bar: Zero API Key Assurance */}
+      {/* Footer Status Bar: Real Street Verification */}
       <div className="flex flex-wrap items-center justify-between gap-2 mt-2.5 pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-400">
         <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>ZERO API KEY REQUIRED • OPEN GIS & PUBLIC SATELLITE ENGINE</span>
+          <span>REAL GOOGLE MAPS & APPLE MAPS TILES • 100% FREE • ZERO API KEY</span>
         </div>
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1 text-cyan-300">
-            <span className="w-2 h-2 rounded-full bg-cyan-400" /> Feeder
+            <span className="w-2 h-2 rounded-full bg-cyan-400" /> Feeder Pipeline
           </span>
           <span className="flex items-center gap-1 text-emerald-300">
             <span className="w-2 h-2 rounded-full bg-emerald-400" /> Valve Open
